@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>11번가 — 담아만 두지 마.</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101014;color:#f7f5ef;font-family:'Malgun Gothic',sans-serif}button,input{font:inherit}button{cursor:pointer}main{max-width:1120px;margin:auto;padding:36px 32px;display:grid;grid-template-columns:1fr 390px;gap:64px;align-items:center;min-height:100vh}.eyebrow{font-size:12px;letter-spacing:3px;color:#ff506b;font-weight:700}.intro h1{font-size:52px;letter-spacing:-3px;line-height:1.2;margin:24px 0}.intro p{color:#aaaab5;line-height:1.9;font-size:15px}.spec{display:flex;gap:10px;margin:28px 0}.spec span{border:1px solid #35353d;border-radius:20px;padding:8px 12px;font-size:12px;color:#d0cfd6}.chapter{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #26262d}.chapter span{color:#777780;font-size:12px}.chapter strong{font-size:14px;font-weight:400}.note{margin-top:28px;font-size:11px!important;color:#777780!important}.stage{position:relative;aspect-ratio:9/16;width:100%;background:#ff003b;box-shadow:0 20px 100px #0009;overflow:hidden;border-radius:5px}canvas{width:100%;height:100%;display:block}.cover{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0002}.cover button{border:1px solid #fff5;border-radius:50%;width:84px;height:84px;color:white;background:#18181aaf;backdrop-filter:blur(10px);font-size:29px;padding-left:10px}.cover[hidden]{display:none}.controls{margin-top:18px}.actions{display:flex;align-items:center;gap:8px}.actions button{border:1px solid #35353d;border-radius:7px;background:#202027;color:#eee;padding:9px 12px;font-size:12px}.actions button:first-child{background:#ff003b;border-color:#ff003b;font-weight:700}.time{margin-left:auto;font-size:12px;color:#a6a6b1;font-variant-numeric:tabular-nums}input[type=range]{width:100%;accent-color:#ff3459;margin:18px 0 0;cursor:pointer}.sources{font-size:11px;color:#777780;margin-top:14px}.sources a{color:#aaaab5}@media(max-width:800px){main{padding:24px;grid-template-columns:1fr;gap:28px;max-width:460px}.intro h1{font-size:34px;letter-spacing:-2px;margin:12px 0}.intro p,.chapters,.note{display:none}.spec{margin:16px 0 0}.player{width:100%}.eyebrow{font-size:10px}}
+</style>
+</head>
+<body><main>
+<section class="intro"><div class="eyebrow">11ST · KINETIC CAMPAIGN</div><h1>담아만<br>두지 마.</h1><p>장바구니 속 망설임을<br>득템의 설렘으로 바꾸는 30초.</p><div class="spec"><span>30초</span><span>9:16</span><span>128 BPM</span></div><div class="chapters"><div class="chapter"><span>01</span><strong>장바구니에 담아만 뒀다면?</strong></div><div class="chapter"><span>02</span><strong>쇼킹딜 · 취향 발견 · 쿠폰과 혜택</strong></div><div class="chapter"><span>03</span><strong>쇼핑할 맛 난다, 11번가.</strong></div></div><p class="note">음악과 함께 재생해 보세요.<br>오리지널 비트와 타이포그래피가 함께 움직입니다.</p></section>
+<section class="player" aria-label="11번가 30초 광고 미리보기"><div class="stage"><canvas id="screen" width="1080" height="1920" aria-label="30초 세로형 키네틱 타이포 광고"></canvas><div class="cover" id="cover"><button id="bigplay" aria-label="음악과 함께 재생">▶</button></div></div><div class="controls"><div class="actions"><button id="play">재생</button><button id="restart">처음부터</button><button id="mute" aria-pressed="false">음악 켜짐</button><span class="time" id="time">00:00 / 00:30</span></div><input id="seek" type="range" min="0" max="30" step="0.01" value="0" aria-label="재생 위치"></div><div class="sources">서비스 참고: <a href="https://www.11st.co.kr/html/nc/deal/main.html" target="_blank" rel="noopener">11번가 쇼킹딜</a> · 홍보 시안</div></section>
+</main>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
+const W=1080,H=1920,BPM=128,BEAT=60/BPM,DURATION=30,SCENE=BEAT*8;
+const C={red:'#ff003b',ink:'#15151b',cream:'#fff8ee',mint:'#caff60',pink:'#ffc6d6'};
+const titles=['장바구니에 담아만 뒀다면?','이제 득템할 타이밍!','눈길 잡는 쇼킹딜','패션부터 리빙까지','오늘의 쿠폰 · 혜택','쇼핑 텐션 UP!','갖고 싶던 그 순간','쇼핑할 맛 난다!'];
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),out=x=>1-Math.pow(1-clamp(x),3);
+function pop(x){x=clamp(x);return x===1?1:1+2.7*Math.pow(x-1,3)+1.7*Math.pow(x-1,2)}
+function pulse(t){const x=(t/BEAT)%1;return Math.exp(-x*12)}
+function font(size,weight=900){ctx.font=`${weight} ${size}px "Malgun Gothic",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle'}
+function txt(s,x,y,size,color=C.cream,opts={}){ctx.save();ctx.translate(x,y);ctx.rotate((opts.r||0)*Math.PI/180);const sc=opts.scale??1;ctx.scale(sc,sc);ctx.globalAlpha=clamp(opts.alpha??1);font(size,opts.weight||900);if(opts.max){const tw=ctx.measureText(s).width;if(tw>opts.max)ctx.scale(opts.max/tw,1)}ctx.fillStyle=color;ctx.fillText(s,0,0);ctx.restore()}
+function line(x1,y1,x2,y2,color,width=6){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
+function round(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function star(x,y,r,color,rotation=0){ctx.save();ctx.translate(x,y);ctx.rotate(rotation);ctx.fillStyle=color;ctx.beginPath();for(let i=0;i<24;i++){const a=i*Math.PI/12,rr=i%2?r*.76:r;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}ctx.closePath();ctx.fill();ctx.restore()}
+function arrow(x,y,size,color,rot=0){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.strokeStyle=color;ctx.lineWidth=15;ctx.lineCap='square';ctx.beginPath();ctx.moveTo(-size*.6,0);ctx.lineTo(size*.6,0);ctx.moveTo(size*.12,-size*.48);ctx.lineTo(size*.6,0);ctx.lineTo(size*.12,size*.48);ctx.stroke();ctx.restore()}
+function label(s,x,y,w,bg,fg,rot=0){ctx.save();ctx.translate(x,y);ctx.rotate(rot*Math.PI/180);round(-w/2,-38,w,76,38,bg);txt(s,0,0,28,fg,{weight:700});ctx.restore()}
+function enter(s,x,y,size,color,u,delay=0,opts={}){const p=pop((u-delay)/.46);if(p<=0)return;txt(s,x,y+100*(1-clamp(p)),size,color,{...opts,scale:p*(opts.scale||1),alpha:clamp((u-delay)/.16),max:opts.max||940})}
+function header(i,light){let col=light?C.ink:C.cream;txt('11번가',161,119,38,col);txt('SHOPPING, TURN IT UP.',752,122,22,col,{weight:700});line(80,179,1000,179,col,2);txt(String(i+1).padStart(2,'0')+' / 08',907,1760,22,col,{weight:700});line(80,1821,1000,1821,col+'40',3)}
+function scene(i,u,t){const b=pulse(t),light=[1,3,6].includes(i);ctx.fillStyle=i===0||i===4||i===7?C.red:i===1||i===6?C.cream:i===3?C.mint:C.ink;ctx.fillRect(0,0,W,H);const fg=light?C.ink:C.cream;header(i,light);
+if(i===0){
+  for(let j=0;j<3;j++) {ctx.strokeStyle='#ffffff12';ctx.lineWidth=2;ctx.beginPath();ctx.arc(540,900,430+j*170+16*b,0,Math.PI*2);ctx.stroke()}
+  label('HEY, YOU!',540,340,240,C.cream,C.red,-6);
+  enter('잠깐!',540,665,250,C.cream,u,0,{scale:1+.045*b,r:-5});
+  enter('장바구니에',540,1000,104,C.cream,u,.65);
+  enter('담아만',540,1164,157,C.mint,u,1.15,{scale:1+.035*b});
+  enter('뒀다면?',540,1340,157,C.cream,u,1.6);
+  arrow(870,1540,100,C.mint,Math.PI/2+.1*Math.sin(t*3));
+}
+if(i===1){
+  txt('NOW',540,505,300,'#15151b0b',{r:-90});
+  enter('이제',540,570,130,C.ink,u,0,{r:-3});
+  const p=pop((u-.4)/.5);if(p>0){ctx.save();ctx.translate(540,880);ctx.rotate(-.055);ctx.scale(p,p);round(-470,-150,940,300,14,C.red);txt('득템할',0,0,219,C.cream,{scale:1+.045*b,max:850});ctx.restore()}
+  enter('타이밍!',540,1205,189,C.ink,u,.9,{r:2});
+  label('망설임 OFF · 설렘 ON',540,1460,540,C.ink,C.cream,0);
+  star(900,415,82,C.red,t*.5);arrow(162,1530,100,C.red,-Math.PI/4);
+}
+if(i===2){
+  for(let j=0;j<5;j++){txt('DEAL   DEAL   DEAL',540+(j%2?1:-1)*((t*70)%180),390+j*280,150,'#ffffff08',{r:-12,max:1400})}
+  label('발견하는 재미',540,485,330,C.mint,C.ink,6);
+  enter('눈길 잡는',540,755,104,C.cream,u,0);
+  enter('쇼킹',540,1020,260,C.cream,u,.45,{scale:1+.05*b,r:-4});
+  enter('딜',540,1295,290,C.mint,u,.9,{scale:1+.07*b,r:4});
+  star(886,715,72,C.red,t);star(205,1430,48,C.red,-t);
+  txt('매력적인 상품을 만나보세요',540,1560,35,C.cream,{weight:500});
+}
+if(i===3){
+  const words=[['패션',-.02],['뷰티',.035],['리빙',-.025]];
+  words.forEach(([s,r],j)=>{const p=out((u-j*.38)/.48);ctx.save();ctx.translate(540+(1-p)*(j%2?1000:-1000),650+j*245);ctx.rotate(r);round(-440,-107,880,214,12,j===1?C.red:C.ink);txt(s,0,0,143,C.cream,{scale:1+.024*b});ctx.restore()});
+  label('취향대로 골라봐',540,410,390,C.cream,C.ink,-4);
+  enter('내 취향, 한가득.',540,1530,65,C.ink,u,1.4);
+}
+if(i===4){
+  txt('CHECK',540,440,135,'#ffffff28',{r:-9});
+  enter('결제 전',540,650,111,C.cream,u,0);
+  enter('한 번 더!',540,845,161,C.cream,u,.35,{scale:1+.04*b});
+  const p=pop((u-.8)/.5);if(p>0){ctx.save();ctx.translate(540,1170);ctx.rotate(-.07);ctx.scale(p,p);round(-465,-150,930,300,20,C.cream);ctx.fillStyle=C.red;for(const x of [-465,465]){ctx.beginPath();ctx.arc(x,0,33,0,Math.PI*2);ctx.fill()}txt('쿠폰 · 혜택',0,0,116,C.red,{max:820,scale:1+.025*b});ctx.restore()}
+  enter('오늘의 혜택을 확인해 봐',540,1465,48,C.cream,u,1.4);
+  txt('혜택 및 적용 조건은 상품·행사별로 다릅니다',540,1680,22,C.cream,{weight:500});
+}
+if(i===5){
+  for(let j=0;j<10;j++){const h=130+340*(.5+.5*Math.sin(t*5+j));round(100+j*90,1500-h,55,h,20,j%2?C.red:'#caff6045')}
+  enter('찾는 재미',540,515,94,C.cream,u,0,{r:-4});
+  enter('고르는 설렘',540,700,100,C.cream,u,.4,{r:3});
+  enter('쇼핑 텐션',540,950,117,C.cream,u,.8);
+  enter('UP!',540,1240,294,C.mint,u,1.1,{scale:1+.065*b,r:-5});
+  arrow(905,1060,92,C.red,-Math.PI/2);
+  label('볼수록 즐거워지는 쇼핑',540,1610,540,C.cream,C.ink,0);
+}
+if(i===6){
+  ctx.strokeStyle='#15151b14';ctx.lineWidth=4;for(let j=0;j<4;j++){ctx.beginPath();ctx.arc(540,1000,290+j*145+15*b,0,Math.PI*2);ctx.stroke()}
+  enter('갖고 싶던',540,665,118,C.ink,u,0);
+  enter('그 순간,',540,870,160,C.ink,u,.45,{r:-3});
+  enter('지금',540,1120,225,C.red,u,.9,{scale:1+.055*b});
+  enter('만나봐!',540,1370,170,C.ink,u,1.35,{r:3});
+  star(895,460,75,C.red,t*.65);
+}
+if(i===7){
+  for(let j=0;j<18;j++){const a=j*2.399,rr=440+((u*90+j*35)%400),x=540+Math.cos(a)*rr,y=1010+Math.sin(a)*rr*1.4;ctx.save();ctx.translate(x,y);ctx.rotate(t+j);ctx.fillStyle=j%2?C.mint:C.pink;ctx.fillRect(-7,-20,14,40);ctx.restore()}
+  enter('쇼핑할',540,610,156,C.cream,u,0);
+  enter('맛 난다!',540,810,167,C.cream,u,.3,{scale:1+.04*b});
+  const p=pop((u-.65)/.55);if(p>0){ctx.save();ctx.translate(540,1110);ctx.scale(p,p);round(-440,-160,880,320,40,C.cream);txt('11번가',0,-3,206,C.red,{max:790});ctx.restore()}
+  enter('지금 11번가에서',540,1430,55,C.cream,u,1.1);
+  txt('www.11st.co.kr',540,1540,37,C.cream,{weight:700});
+  txt('혜택 및 적용 조건은 상품·행사별로 다릅니다',540,1680,22,C.cream,{weight:500});
+}
+}
+function render(t){t=clamp(t,0,29.99999);const i=Math.min(7,Math.floor(t/SCENE)),u=t-i*SCENE;ctx.save();scene(i,u,t);ctx.restore();const end=SCENE-u;if(end<.18&&i<7){ctx.save();ctx.fillStyle=[C.cream,C.ink,C.mint,C.red,C.ink,C.cream,C.red][i];ctx.fillRect(W*(end/.18),0,W,H);ctx.restore()}ctx.fillStyle=i===1||i===3||i===6?C.red:C.mint;ctx.fillRect(80,1818,920*t/30,6)}
+
+// Original 128 BPM electro-pop cue: drums, syncopated bass, plucked chords.
+let ac=null,music=null,source=null,gain=null;
+function createMusic(context){
+  const sr=48000,n=sr*DURATION,buffer=context.createBuffer(2,n,sr),L=buffer.getChannelData(0),R=buffer.getChannelData(1);
+  let seed=2311;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)|0;return (seed>>>0)/4294967296*2-1};
+  function put(start,dur,fn,amp=1,pan=0){const a=Math.round(start*sr),count=Math.min(Math.round(dur*sr),n-a);for(let j=0;j<count;j++){const t=j/sr,s=fn(t,j)*amp;L[a+j]+=s*(.78-pan*.22);R[a+j]+=s*(.78+pan*.22)}}
+  function note(at,midi,dur,amp,kind='pluck',pan=0){const f=440*2**((midi-69)/12);put(at,dur,(t)=>{const env=Math.min(1,t/.004)*Math.exp(-t/(kind==='bass'?.12:.23))*Math.min(1,(dur-t)/.025);let v=Math.sin(2*Math.PI*f*t)+.28*Math.sin(4*Math.PI*f*t)+.11*Math.sin(6*Math.PI*f*t);return v*env},amp,pan)}
+  const chords=[[60,64,67,71],[57,60,64,67],[53,57,60,64],[55,59,62,67]],roots=[36,33,29,31];
+  for(let beat=0;beat<64;beat++){
+    const at=beat*BEAT,bar=Math.floor(beat/4),ch=chords[bar%4];
+    put(at,.32,t=>Math.sin(2*Math.PI*(48*t+1.7*(1-Math.exp(-t*35))))*Math.exp(-t*18),.48);
+    if(beat%2===1)put(at,.18,t=>(random()*.65+Math.sin(2*Math.PI*180*t)*.25)*Math.exp(-t*31)*Math.min(1,t/.002),.26);
+    for(let h=0;h<2;h++)put(at+h*BEAT/2,.055,t=>random()*Math.exp(-t*90),h?.072:.045,h?.6:-.5);
+    if(beat%4===3)put(at+BEAT*.75,.12,t=>random()*Math.exp(-t*32),.06,.6);
+    note(at,roots[bar%4],.28,.21,'bass');if(beat%2===0)note(at+BEAT*.75,roots[bar%4]+12,.18,.11,'bass');
+    if(beat%2===0||beat%4===3){const when=at+(beat%4===3?BEAT*.5:0);ch.forEach((m,j)=>{note(when+j*.009,m+12,.63,.055,'pluck',(j-1.5)/2);note(when+.19+j*.009,m+12,.5,.015,'pluck',-(j-1.5)/2)})}
+    if(beat>=8&&beat<60&&beat%2===0){const melody=[79,76,74,72,76,79,81,79];note(at+BEAT*.5,melody[Math.floor(beat/2)%8],.45,.055,'pluck',.3)}
+    if(beat%8===7){for(let h=1;h<4;h++)put(at+h*BEAT/4,.08,t=>random()*Math.exp(-t*55),.045+h*.012,-.3)}
+  }
+  for(let j=0;j<n;j++){const t=j/sr,fade=Math.min(1,t/.025)*Math.min(1,(30-t)/.5);L[j]=Math.tanh(L[j]*1.35)*.79*fade;R[j]=Math.tanh(R[j]*1.35)*.79*fade}
+  return buffer;
+}
+function wavBytes(buffer){const n=buffer.length,arr=new ArrayBuffer(44+n*4),v=new DataView(arr);const s=(o,x)=>{for(let j=0;j<x.length;j++)v.setUint8(o+j,x.charCodeAt(j))};s(0,'RIFF');v.setUint32(4,36+n*4,true);s(8,'WAVE');s(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);v.setUint32(24,48000,true);v.setUint32(28,192000,true);v.setUint16(32,4,true);v.setUint16(34,16,true);s(36,'data');v.setUint32(40,n*4,true);const l=buffer.getChannelData(0),r=buffer.getChannelData(1);for(let j=0;j<n;j++){v.setInt16(44+j*4,clamp(l[j],-1,1)*32767,true);v.setInt16(46+j*4,clamp(r[j],-1,1)*32767,true)}return new Uint8Array(arr)}
+const play=document.getElementById('play'),seek=document.getElementById('seek'),clock=document.getElementById('time'),cover=document.getElementById('cover'),mute=document.getElementById('mute');
+let playing=false,position=0,started=0,muted=false;
+function ensureAudio(){if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)({sampleRate:48000});gain=ac.createGain();gain.connect(ac.destination);music=createMusic(ac)}gain.gain.value=muted?0:.85;return ac.resume()}
+function stopSound(){if(source){try{source.stop()}catch(e){}source=null}}
+function soundAt(t){stopSound();source=ac.createBufferSource();source.buffer=music;source.connect(gain);source.start(0,Math.min(t,29.999))}
+function ui(){play.textContent=playing?'일시정지':'재생';seek.value=position;clock.textContent='00:'+String(Math.floor(position)).padStart(2,'0')+' / 00:30';cover.hidden=playing||position>0}
+async function toggle(){if(playing){position=clamp((performance.now()-started)/1000,0,30);playing=false;stopSound()}else{if(position>=30)position=0;await ensureAudio();started=performance.now()-position*1000;soundAt(position);playing=true}ui()}
+play.onclick=toggle;document.getElementById('bigplay').onclick=toggle;
+document.getElementById('restart').onclick=async()=>{position=0;render(0);if(playing){await ensureAudio();started=performance.now();soundAt(0)}ui()};
+mute.onclick=()=>{muted=!muted;mute.textContent=muted?'음악 꺼짐':'음악 켜짐';mute.setAttribute('aria-pressed',String(muted));if(gain)gain.gain.value=muted?0:.85};
+seek.oninput=()=>{position=Number(seek.value);render(position);if(playing){started=performance.now()-position*1000;soundAt(position)}ui()};
+function tick(){if(playing){position=clamp((performance.now()-started)/1000,0,30);render(position);if(position>=30){playing=false;stopSound()}ui()}requestAnimationFrame(tick)}
+window.campaign={render,createMusic,wavBytes,titles,duration:DURATION,bpm:BPM};
+render(1.9);ui();requestAnimationFrame(tick);
+})();
+</script></body></html>
+
